@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squish — Image Compressor & Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e8e6e1;
+    --border-strong: #d0cdc7;
+    --text: #1a1916;
+    --muted: #8a8680;
+    --accent-light: #f0ede8;
+    --green: #16a34a;
+    --red: #dc2626;
+    --radius: 10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.5rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.3px;
+  }
+
+  .logo em { font-style: italic; color: var(--muted); }
+
+  .free-tag {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .hero { margin-bottom: 36px; }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .hero h1 em { font-style: italic; color: var(--muted); }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-family: 'Geist', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 400;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 52px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--surface);
+    margin-bottom: 20px;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--text);
+    background: var(--accent-light);
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 14px;
+    color: var(--muted);
+  }
+
+  .drop-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .drop-sub {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 300;
+  }
+
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .control-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .control-row:last-child { border-bottom: none; }
+
+  .control-row-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    min-width: 100px;
+  }
+
+  .control-row-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 300;
+    margin-top: 2px;
+  }
+
+  .control-row-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 160px;
+    height: 2px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--text);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .quality-val {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.8rem;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .format-pills { display: flex; gap: 6px; }
+
+  .pill {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pill:hover { border-color: var(--text); color: var(--text); }
+  .pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .dim-inputs { display: flex; align-items: center; gap: 8px; }
+
+  .dim-input {
+    width: 76px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.15s;
+  }
+
+  .dim-input:focus { border-color: var(--text); }
+  .dim-sep { color: var(--muted); font-size: 0.8rem; }
+
+  .lock-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.8rem;
+    transition: all 0.15s;
+  }
+
+  .lock-btn.locked { border-color: var(--text); color: var(--text); background: var(--accent-light); }
+
+  .process-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Geist', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-bottom: 28px;
+  }
+
+  .process-btn:hover { opacity: 0.82; }
+  .process-btn:active { transform: scale(0.995); }
+  .process-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .progress-wrap { display: none; margin-bottom: 20px; }
+  .progress-wrap.visible { display: block; }
+
+  .progress-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 300;
+  }
+
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--text);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+
+  .results-area { display: none; }
+  .results-area.visible { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .results-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .results-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+  }
+
+  .dl-all-btn {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Geist', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+  }
+
+  .dl-all-btn:hover { color: var(--text); }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 8px;
+    animation: fadeUp 0.25s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-thumb {
+    width: 52px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: var(--border);
+  }
+
+  .result-name {
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .result-stats {
+    display: flex;
+    gap: 10px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    align-items: center;
+  }
+
+  .saved-tag { color: var(--green); font-weight: 500; }
+  .bigger-tag { color: var(--red); font-weight: 500; }
+
+  .dl-btn {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: 'Geist', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .dl-btn:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .footer-note strong { font-weight: 500; color: var(--text); }
+
+  @media (max-width: 560px) {
+    .result-card { grid-template-columns: 44px 1fr; }
+    .dl-btn { grid-column: 1 / -1; width: 100%; text-align: center; }
+    input[type="range"] { width: 100px; }
+    .format-pills { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">Squ<em>i</em>sh</a>
+  <span class="free-tag">Free · No signup required</span>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Compress, convert<br><em>& resize images.</em></h1>
+    <p>No uploads to any server. Everything runs in your browser — fast, private, and free.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('compress', this)">Compress</button>
+    <button class="tab" onclick="switchTab('convert', this)">Convert</button>
+    <button class="tab" onclick="switchTab('resize', this)">Resize</button>
+  </div>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <path d="M21 15l-5-5L5 21"/>
+    </svg>
+    <div class="drop-title" id="dropTitle">Drop images here</div>
+    <p class="drop-sub" id="dropSub">or click to browse · JPG, PNG, WebP, GIF supported · Multiple files OK</p>
+  </div>
+
+  <!-- Compress -->
+  <div id="panel-compress">
+    <div class="controls">
+      <div class="control-row">
+        <div>
+          <div class="control-row-label">Quality</div>
+          <div class="control-row-sub">Lower = smaller file size</div>
+        </div>
+        <div class="control-row-right">
+          <input type="range" id="qualitySlider" min="10" max="100" value="75"
+            oninput="document.getElementById('qualityVal').textContent = this.value + '%'">
+          <span class="quality-val" id="qualityVal">75%</span>
+        </div>
+      </div>
+      <div class="control-row">
+        <div><div class="control-row-label">Output format</div></div>
+        <div class="control-row-right">
+          <div class="format-pills">
+            <button class="pill active" onclick="selectFormat(this,'jpeg')">JPEG</button>
+            <button class="pill" onclick="selectFormat(this,'png')">PNG</button>
+            <button class="pill" onclick="selectFormat(this,'webp')">WebP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Convert -->
+  <div id="panel-convert" style="display:none">
+    <div class="controls">
+      <div class="control-row">
+        <div>
+          <div class="control-row-label">Convert to</div>
+          <div class="control-row-sub">Applied to all selected files</div>
+        </div>
+        <div class="control-row-right">
+          <div class="format-pills">
+            <button class="pill active" onclick="selectFormat(this,'jpeg')">JPEG</button>
+            <button class="pill" onclick="selectFormat(this,'png')">PNG</button>
+            <button class="pill" onclick="selectFormat(this,'webp')">WebP</button>
+            <button class="pill" onclick="selectFormat(this,'bmp')">BMP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resize -->
+  <div id="panel-resize" style="display:none">
+    <div class="controls">
+      <div class="control-row">
+        <div>
+          <div class="control-row-label">Dimensions</div>
+          <div class="control-row-sub">Leave one blank to auto-scale</div>
+        </div>
+        <div class="control-row-right">
+          <div class="dim-inputs">
+            <input type="number" class="dim-input" id="resizeW" placeholder="W" oninput="handleResize('w')">
+            <span class="dim-sep">×</span>
+            <input type="number" class="dim-input" id="resizeH" placeholder="H" oninput="handleResize('h')">
+            <button class="lock-btn locked" id="lockBtn" onclick="toggleLock()" title="Lock aspect ratio">🔒</button>
+          </div>
+        </div>
+      </div>
+      <div class="control-row">
+        <div><div class="control-row-label">Output format</div></div>
+        <div class="control-row-right">
+          <div class="format-pills">
+            <button class="pill active" onclick="selectFormat(this,'jpeg')">JPEG</button>
+            <button class="pill" onclick="selectFormat(this,'png')">PNG</button>
+            <button class="pill" onclick="selectFormat(this,'webp')">WebP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label" id="progressLabel">Processing…</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <button class="process-btn" id="processBtn" onclick="processImages()" disabled>
+    Process images
+  </button>
+
+  <div class="results-area" id="resultsArea">
+    <div class="results-header">
+      <div class="results-title">All done</div>
+      <button class="dl-all-btn" onclick="downloadAll()">Download all</button>
+    </div>
+    <div id="resultsList"></div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-note"><strong>100% private</strong> — images never leave your device</span>
+  <span class="footer-note">Squish © 2025</span>
+</footer>
+
+<script>
+let selectedFiles = [], outputFormat = 'jpeg', currentTab = 'compress';
+let aspectRatio = null, lockAspect = true, processedResults = [];
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['compress','convert','resize'].forEach(p => {
+    document.getElementById('panel-' + p).style.display = p === tab ? 'block' : 'none';
+  });
+}
+
+function selectFormat(btn, fmt) {
+  outputFormat = fmt;
+  btn.closest('.format-pills').querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleLock() {
+  lockAspect = !lockAspect;
+  const btn = document.getElementById('lockBtn');
+  btn.textContent = lockAspect ? '🔒' : '🔓';
+  btn.classList.toggle('locked', lockAspect);
+}
+
+function handleResize(changed) {
+  if (!lockAspect || !aspectRatio) return;
+  const w = parseFloat(document.getElementById('resizeW').value);
+  const h = parseFloat(document.getElementById('resizeH').value);
+  if (changed === 'w' && w) document.getElementById('resizeH').value = Math.round(w / aspectRatio);
+  if (changed === 'h' && h) document.getElementById('resizeW').value = Math.round(h * aspectRatio);
+}
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+fileInput.addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+});
+
+function handleFiles(files) {
+  if (!files.length) return;
+  selectedFiles = files;
+  document.getElementById('processBtn').disabled = false;
+  if (files[0]) {
+    const img = new Image(), url = URL.createObjectURL(files[0]);
+    img.onload = () => { aspectRatio = img.width / img.height; URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  document.getElementById('dropTitle').textContent = `${files.length} file${files.length > 1 ? 's' : ''} selected`;
+  document.getElementById('dropSub').textContent = files.map(f => f.name).join(', ').slice(0, 70) + (files.map(f=>f.name).join(', ').length > 70 ? '…' : '');
+  document.getElementById('resultsArea').classList.remove('visible');
+  document.getElementById('resultsList').innerHTML = '';
+  processedResults = [];
+}
+
+async function processImages() {
+  if (!selectedFiles.length) return;
+  const btn = document.getElementById('processBtn');
+  btn.disabled = true; btn.textContent = 'Processing…';
+  const pw = document.getElementById('progressWrap');
+  const pf = document.getElementById('progressFill');
+  const pl = document.getElementById('progressLabel');
+  pw.classList.add('visible');
+  processedResults = [];
+  document.getElementById('resultsList').innerHTML = '';
+  document.getElementById('resultsArea').classList.remove('visible');
+
+  for (let i = 0; i < selectedFiles.length; i++) {
+    pl.textContent = `Processing ${i + 1} of ${selectedFiles.length} — ${selectedFiles[i].name}`;
+    pf.style.width = ((i / selectedFiles.length) * 100) + '%';
+    const result = await processFile(selectedFiles[i]);
+    processedResults.push(result);
+    renderResult(result, i);
+    await new Promise(r => setTimeout(r, 40));
+  }
+
+  pf.style.width = '100%';
+  pl.textContent = `Done — ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} processed`;
+  document.getElementById('resultsArea').classList.add('visible');
+  btn.disabled = false; btn.textContent = 'Process images';
+}
+
+function processFile(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (currentTab === 'resize') {
+          const rw = parseInt(document.getElementById('resizeW').value);
+          const rh = parseInt(document.getElementById('resizeH').value);
+          if (rw && rh) { w = rw; h = rh; }
+          else if (rw) { w = rw; h = Math.round(rw / (img.width / img.height)); }
+          else if (rh) { h = rh; w = Math.round(rh * (img.width / img.height)); }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const q = currentTab === 'compress' ? parseInt(document.getElementById('qualitySlider').value) / 100 : 0.92;
+        const mimes = { jpeg:'image/jpeg', png:'image/png', webp:'image/webp', bmp:'image/bmp' };
+        const dataUrl = canvas.toDataURL(mimes[outputFormat] || 'image/jpeg', q);
+        const b64 = dataUrl.split(',')[1];
+        const newSize = Math.round((b64.length * 3) / 4);
+        const ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
+        resolve({ name: file.name.replace(/\.[^.]+$/, '') + '.' + ext, dataUrl, originalSize: file.size, newSize, thumb: dataUrl });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderResult(r, idx) {
+  const saved = r.originalSize - r.newSize;
+  const pct = r.originalSize > 0 ? Math.round((saved / r.originalSize) * 100) : 0;
+  const div = document.createElement('div');
+  div.className = 'result-card';
+  div.innerHTML = `
+    <img class="result-thumb" src="${r.thumb}" alt="">
+    <div>
+      <div class="result-name">${r.name}</div>
+      <div class="result-stats">
+        <span>${fmt(r.originalSize)} → ${fmt(r.newSize)}</span>
+        ${pct > 0 ? `<span class="saved-tag">↓ ${pct}% smaller</span>` : pct < 0 ? `<span class="bigger-tag">↑ ${Math.abs(pct)}% larger</span>` : ''}
+      </div>
+    </div>
+    <button class="dl-btn" onclick="downloadOne(${idx})">Download</button>`;
+  document.getElementById('resultsList').appendChild(div);
+}
+
+function downloadOne(idx) {
+  const r = processedResults[idx];
+  const a = document.createElement('a');
+  a.href = r.dataUrl; a.download = r.name; a.click();
+}
+
+function downloadAll() {
+  processedResults.forEach((_, i) => setTimeout(() => downloadOne(i), i * 180));
+}
+
+function fmt(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+</script>
+</body>
+</html>
